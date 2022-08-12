@@ -1,0 +1,69 @@
+---
+title: "us_tilapia_imports"
+author: "Victoria Cutler"
+date: "2022-08-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(janitor)
+library(skimr)
+```
+
+read in csv and explore the data
+```{r}
+us_tilapia_imports <- read_csv(here("data", "us_tilapia_imports.csv"))
+
+summary(us_tilapia_imports)
+names(us_tilapia_imports)
+dim(us_tilapia_imports)
+skim(us_tilapia_imports)
+```
+
+make the data tidy and make the year numeric
+```{r}
+tidy_tilapia <- us_tilapia_imports %>% 
+  pivot_longer(-country, names_to = "year", values_to = "imports")
+
+tidy_tilapia <- tidy_tilapia %>% 
+  mutate(year = as.numeric(tidy_tilapia$year))
+# class(tidy_tilapia$year) to check that year is now numeric
+```
+
+find total imports by year
+```{r}
+yearly_tilapia_tot <- tidy_tilapia %>% dplyr::group_by(year) %>% summarize(total_imports = sum(imports, na.rm = TRUE))
+```
+
+create a ggplot of the yearly total imports:
+```{r}
+ggplot(yearly_tilapia_tot, aes(x = year, y = total_imports)) +
+  geom_line() +
+  labs(title = "Year vs. Total Imports",
+       x = "Year",
+       y = "Total Imports")
+
+ggsave(path = here::here("figs"), filename = "year_vs_totalimports.png")
+```
+
+create a subset from tidy data for only ecuador, honduras, costa rice, mexico
+```{r}
+tidy_subset <- tidy_tilapia %>% filter(country %in% c("Ecuador", "Honduras", "Costa Rica", "Mexico"))
+```
+
+create a ggplot of total tilapia over time for the subset and separate by country
+```{r}
+ggplot(data = tidy_subset, aes(x = year, y = imports)) +
+  geom_line(aes(color = country)) +
+  labs(title = "Year vs Imports for a Subset of Countries",
+       x = "Years",
+       y = "Imports") +
+  scale_color_manual(values = c("orange","green","black","purple")) +
+  theme_classic()
+
+ggsave(path = here::here("figs"), filename = "years_vs_imports_bysubsetofcountries.png")
+```
+

@@ -1,0 +1,48 @@
+---
+title: "Runoff Volumes"
+author: "Victoria Cutler"
+date: "2022-08-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here)
+```
+
+source code from storm_runoff:
+```{r}
+here::here("src", "storm_runoff")
+```
+
+estimate stormwater volume at specific values:
+```{r}
+I_vec <- seq(from = 0.6, to = 0.8, by = 0.01)
+predict_runoff(A = 182, I = I_vec)
+```
+
+bind imperviousness vector to the runoff predictions
+```{r}
+
+# make predictions a dataframe
+predictions <- data.frame(predicted_runoff = predict_runoff(A = 182, I = I_vec))
+
+# combine impervious and predictions
+predictions_and_imperviousness <- predictions %>% mutate(I = I_vec)
+```
+
+create ggplots scatter and line then put them on the same graph then save it
+```{r}
+ggplot(predictions_and_imperviousness, aes(x = I, y = predicted_runoff)) +
+  geom_point() +
+    geom_line() +
+    labs (title = "Fraction of the watershed that's Impervious vs. Predicted Runoff Volume (ft^3)",
+    x = "Fraction of the watershed that's Impervious",
+    y = "Predicted Runoff Volume (ft^3)")
+
+ggsave(path = here::here("figs"),filename = "imperv_vs_predictedrunoff.png")
+```
+
+
